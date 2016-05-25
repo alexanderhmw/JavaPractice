@@ -1,0 +1,539 @@
+package questionnaireCollector;
+
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Vector;
+
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
+import javax.swing.border.MatteBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+import jxl.Cell;
+import jxl.CellType;
+import jxl.Range;
+import jxl.Sheet;
+import jxl.format.Alignment;
+import jxl.format.Border;
+import jxl.format.BorderLineStyle;
+import jxl.format.VerticalAlignment;
+import jxl.write.Label;
+import jxl.write.WritableCellFormat;
+import jxl.write.WritableFont;
+import jxl.write.WritableSheet;
+import jxl.write.WriteException;
+import jxl.write.biff.RowsExceededException;
+
+public class FormTemplate {
+
+	Font f=new Font("微软雅黑",Font.BOLD,20);
+	static int thinBorder=1;
+	static int thickBorder=3;
+	
+	class DescriptionLabel extends JLabel{
+		public GridBagConstraints c=new GridBagConstraints();
+		public DescriptionLabel(String label, int x, int y, int width, int height, MatteBorder border){
+			super(label);
+			c.fill=GridBagConstraints.BOTH;
+			c.weightx=0;
+			c.weighty=0;
+			c.gridx=x;
+			c.gridy=y;
+			c.gridwidth=width;
+			c.gridheight=height;
+			c.insets=new Insets(0,0,0,0);
+			this.setBorder(border);
+			this.setFont(f);
+		}
+	}
+	
+	class RangeComparator implements Comparator<Range>{
+		@Override
+		public int compare(Range o1, Range o2) {
+			Cell cell1=o1.getTopLeft();
+			Cell cell2=o2.getTopLeft();
+			if(cell1.getColumn()==cell2.getColumn()){
+				return cell1.getRow()-cell2.getRow();
+			}else{
+				return cell1.getColumn()-cell2.getColumn();
+			}
+		}		
+	}
+		
+	enum OptionType{
+		OptionRadio,OptionCheck,OptionNumber
+	}
+	
+	class OptionRadioButton extends JRadioButton{
+		public GridBagConstraints c=new GridBagConstraints();
+		public OptionRadioButton(String label, boolean selection, int x, int y, int width, int height, MatteBorder border){
+			super(label);
+			c.fill=GridBagConstraints.BOTH;
+			c.weightx=0;
+			c.weighty=0;
+			c.gridx=x;
+			c.gridy=y;
+			c.gridwidth=width;
+			c.gridheight=height;
+			c.insets=new Insets(0,0,0,0);
+			c.ipadx=5;
+			c.ipady=0;
+			this.setSelected(selection);
+			this.setBorderPainted(true);
+			this.setBorder(border);
+			this.setFont(f);
+			this.setBackground(selection?Color.GREEN:Color.YELLOW);
+		}
+	}
+	
+	class OptionCheckBox extends JCheckBox{
+		public GridBagConstraints c=new GridBagConstraints();
+		public OptionCheckBox(String label, boolean selection, int x, int y, int width, int height, MatteBorder border){
+			super(label);
+			c.fill=GridBagConstraints.BOTH;
+			c.weightx=0;
+			c.weighty=0;
+			c.gridx=x;
+			c.gridy=y;
+			c.gridwidth=width;
+			c.gridheight=height;
+			c.insets=new Insets(0,0,0,0);
+			c.ipadx=5;
+			c.ipady=0;
+			this.setSelected(selection);
+			this.setBorderPainted(true);
+			this.setBorder(border);
+			this.setFont(f);
+			this.setBackground(selection?Color.GREEN:Color.YELLOW);
+		}
+	}
+	
+	class OptionTextField extends JTextField{
+		public GridBagConstraints c=new GridBagConstraints();
+		public OptionTextField(String label, int x, int y, int width, int height){
+			super(label);
+			c.fill=GridBagConstraints.BOTH;
+			c.weightx=0;
+			c.weighty=0;
+			c.gridx=x;
+			c.gridy=y;
+			c.gridwidth=width;
+			c.gridheight=height;
+			c.insets=new Insets(5,5,5,0);
+			this.setEditable(false);
+			this.setFont(f);
+		}
+	}
+	
+	int optionStartRow;	
+	int descriptionColNum;
+	int descriptionRowNum;
+	int optionColNum;
+	OptionType optionType;
+	
+	Vector<Vector<DescriptionLabel>> formDescriptions=new Vector<Vector<DescriptionLabel>>();
+	String[] optionLabels={};
+	Vector<Vector<String>> optionContents=new Vector<Vector<String>>();
+	Vector<Vector<String>> optionDefaults=new Vector<Vector<String>>();
+	Vector<Vector<Object>> optionObjects=new Vector<Vector<Object>>();
+
+	JPanel panel=new JPanel(new GridBagLayout());
+	
+	public FormTemplate(String config, Sheet sheet, boolean resultFlag){
+		//=================================
+		//Load Configuration
+		String[] tmpStrs=config.split(",");
+		optionStartRow=Integer.valueOf(tmpStrs[0]);	//0: optionStartRow
+		descriptionColNum=Integer.valueOf(tmpStrs[1]);	//1: descriptionColNum
+		optionColNum=Integer.valueOf(tmpStrs[2]);	//2: optionColNum
+		optionType=resultFlag?OptionType.OptionNumber:OptionType.values()[Integer.valueOf(tmpStrs[3])];	//3: optionType
+		if(tmpStrs.length>=5){
+			f=new Font("微软雅黑",Font.BOLD,Integer.valueOf(tmpStrs[4]));
+		}
+		
+		//=================================
+		//Setup OptionLabels		
+		setupOptionLabels(sheet);
+		
+		//=================================
+		//Setup Description
+		setupDescription(sheet);
+		
+		//=================================
+		//Setup Option Objects	
+		switch(optionType){
+		case OptionRadio:
+			setupOptionRadio(sheet);
+			break;
+		case OptionCheck:
+			setupOptionCheck(sheet);
+			break;
+		case OptionNumber:
+			setupOptionNumber(sheet);
+			break;
+		}		
+		
+		//=================================
+		//Setup Panel
+		setupPanel();
+	}
+	
+	protected void setupOptionLabels(Sheet sheet){
+		optionLabels=new String[optionColNum];
+		for(int i=0;i<optionColNum;i++){
+			if(optionStartRow>0){
+				Cell cell=sheet.getCell(i+descriptionColNum, 0);
+				if(cell.getType()==CellType.LABEL){
+					optionLabels[i]=cell.getContents();
+				}else{
+					optionLabels[i]="";
+				}
+			}else{
+				optionLabels[i]="";
+			}
+		}
+	}
+	
+	protected void setupDescription(Sheet sheet){
+		formDescriptions.clear();
+		formDescriptions.setSize(descriptionColNum);		
+		Range[] ranges=sheet.getMergedCells();
+		Arrays.sort(ranges,new RangeComparator());
+		int rangeId=0;
+		descriptionRowNum=0;
+		for(int i=0;i<descriptionColNum;i++){
+			formDescriptions.set(i, new Vector<DescriptionLabel>());
+			Cell[] cells=sheet.getColumn(i);
+			int tmpDescriptionRowNum=0;
+			for(int j=optionStartRow;j<cells.length;j++){
+				int top=thickBorder,bottom=thickBorder;
+				while(rangeId<ranges.length&&ranges[rangeId].getTopLeft().getColumn()<i){
+					rangeId++;
+				}
+				while(rangeId<ranges.length&&ranges[rangeId].getTopLeft().getColumn()==i&&ranges[rangeId].getBottomRight().getRow()<j){
+					rangeId++;
+				}
+				if(rangeId>=ranges.length||ranges[rangeId].getTopLeft().getColumn()>i||ranges[rangeId].getTopLeft().getRow()>j){
+					if(cells[j].getType()==CellType.LABEL){
+						if(i>0){							
+							for(int k=0;k<formDescriptions.get(0).size();k++){
+								int startRow=formDescriptions.get(0).get(k).c.gridy;
+								int endRow=formDescriptions.get(0).get(k).c.gridy+formDescriptions.get(0).get(k).c.gridheight-1;
+								if(j>=startRow&&j<=endRow){
+									top=(j==startRow?thickBorder:thinBorder);
+									bottom=(j==endRow?thickBorder:thinBorder);
+									break;
+								}
+							}
+							formDescriptions.get(i).add(new DescriptionLabel(cells[j].getContents(), i, j, 1, 1,BorderFactory.createMatteBorder(top, 1, bottom, 1, Color.GRAY)));
+						}else{
+							formDescriptions.get(i).add(new DescriptionLabel(cells[j].getContents(), i, j, 1, 1,BorderFactory.createMatteBorder(top, 1, bottom, 1, Color.GRAY)));
+						}						
+						if(tmpDescriptionRowNum+optionStartRow<j+1){
+							tmpDescriptionRowNum=j-optionStartRow+1;
+						}
+					}
+				}else if(ranges[rangeId].getTopLeft().getRow()==j){
+					if(cells[j].getType()==CellType.LABEL){
+						formDescriptions.get(i).add(new DescriptionLabel(cells[j].getContents(), i, j, 1, ranges[rangeId].getBottomRight().getRow()-j+1,BorderFactory.createMatteBorder(top, 1, bottom, 1, Color.GRAY)));
+						if(tmpDescriptionRowNum+optionStartRow<ranges[rangeId].getBottomRight().getRow()+1){
+							tmpDescriptionRowNum=ranges[rangeId].getBottomRight().getRow()-optionStartRow+1;
+						}
+					}
+				}
+			}
+			if(descriptionRowNum<tmpDescriptionRowNum){
+				descriptionRowNum=tmpDescriptionRowNum;
+			}
+		}
+	}
+	
+	protected void setupOptionRadio(Sheet sheet){
+		optionContents.clear();
+		optionContents.setSize(optionColNum);
+		optionObjects.clear();
+		optionObjects.setSize(optionColNum);
+		optionDefaults.clear();
+		optionDefaults.setSize(optionColNum);
+		if(optionColNum>1){
+			for(int i=0;i<optionColNum;i++){
+				optionContents.set(i, new Vector<String>());
+				optionDefaults.set(i, new Vector<String>());
+				optionObjects.set(i, new Vector<Object>());
+			}
+			for(int i=0;i<descriptionRowNum;i++){
+				ButtonGroup group=new ButtonGroup();
+				int top=thickBorder,bottom=thickBorder;
+				for(int k=0;k<formDescriptions.get(0).size();k++){
+					int startRow=formDescriptions.get(0).get(k).c.gridy-optionStartRow;
+					int endRow=formDescriptions.get(0).get(k).c.gridy+formDescriptions.get(0).get(k).c.gridheight-1-optionStartRow;
+					if(i>=startRow&&i<=endRow){
+						top=(i==startRow?thickBorder:thinBorder);
+						bottom=(i==endRow?thickBorder:thinBorder);
+						break;
+					}
+				}
+				for(int j=0;j<optionColNum;j++){
+					Cell cell=sheet.getCell(j+descriptionColNum, i+optionStartRow);
+					OptionRadioButton button;
+					if(cell.getType()==CellType.BOOLEAN){
+						optionContents.get(j).add(cell.getContents());
+						optionDefaults.get(j).add(cell.getContents());
+						button=new OptionRadioButton(optionLabels[j], Boolean.valueOf(cell.getContents()), j+descriptionColNum, i+optionStartRow, 1, 1, BorderFactory.createMatteBorder(top, 1, bottom, 1, Color.GRAY));
+					}else{
+						optionContents.get(j).add(String.valueOf(j==0));
+						optionDefaults.get(j).add(String.valueOf(j==0));
+						button=new OptionRadioButton(optionLabels[j], j==0, j+descriptionColNum, i+optionStartRow, 1, 1, BorderFactory.createMatteBorder(top, 1, bottom, 1, Color.GRAY));
+					}
+					optionObjects.get(j).add(button);
+					final int colId=j;
+					final int rowId=i;
+					button.addChangeListener(new ChangeListener() {
+						@Override
+						public void stateChanged(ChangeEvent e) {
+							optionContents.get(colId).set(rowId, String.valueOf(((OptionRadioButton)e.getSource()).isSelected()));
+							((OptionRadioButton)e.getSource()).setBackground(((OptionRadioButton)e.getSource()).isSelected()?Color.GREEN:Color.YELLOW);
+						}
+					});					
+					group.add(button);
+				}
+			}
+		}else if(optionColNum==1){
+			optionContents.set(0, new Vector<String>());
+			optionDefaults.set(0, new Vector<String>());
+			optionObjects.set(0, new Vector<Object>());			
+			for(int i=0;i<formDescriptions.get(0).size();i++){
+				ButtonGroup group=new ButtonGroup();
+				for(int j=0;j<formDescriptions.get(0).get(i).c.gridheight;j++){
+					Cell cell=sheet.getCell(descriptionColNum, j+formDescriptions.get(0).get(i).c.gridy);
+					OptionRadioButton button;
+					int top=(j==0?thickBorder:thinBorder);
+					int bottom=(j==formDescriptions.get(0).get(i).c.gridheight-1?thickBorder:thinBorder);
+					if(cell.getType()==CellType.BOOLEAN){
+						optionContents.get(0).add(cell.getContents());
+						optionDefaults.get(0).add(cell.getContents());
+						button=new OptionRadioButton(optionLabels[0], Boolean.valueOf(cell.getContents()), descriptionColNum, j+formDescriptions.get(0).get(i).c.gridy, 1, 1, BorderFactory.createMatteBorder(top, 1, bottom, 1, Color.GRAY));
+					}else{
+						optionContents.get(0).add(String.valueOf(j==0));
+						optionDefaults.get(0).add(String.valueOf(j==0));
+						button=new OptionRadioButton(optionLabels[0], j==0, descriptionColNum, j+formDescriptions.get(0).get(i).c.gridy, 1, 1, BorderFactory.createMatteBorder(top, 1, bottom, 1, Color.GRAY));
+					}
+					optionObjects.get(0).add(button);
+					final int colId=0;
+					final int rowId=j+formDescriptions.get(0).get(i).c.gridy-optionStartRow;
+					button.addChangeListener(new ChangeListener() {
+						@Override
+						public void stateChanged(ChangeEvent e) {
+							optionContents.get(colId).set(rowId, String.valueOf(((OptionRadioButton)e.getSource()).isSelected()));
+							((OptionRadioButton)e.getSource()).setBackground(((OptionRadioButton)e.getSource()).isSelected()?Color.GREEN:Color.YELLOW);
+						}
+					});	
+					group.add(button);
+				}
+			}		
+		}
+	}
+	
+	protected void setupOptionCheck(Sheet sheet){
+		optionContents.clear();
+		optionContents.setSize(optionColNum);
+		optionObjects.clear();
+		optionObjects.setSize(optionColNum);
+		optionDefaults.clear();
+		optionDefaults.setSize(optionColNum);
+		for(int i=0;i<optionColNum;i++){
+			optionContents.set(i, new Vector<String>());
+			optionDefaults.set(i, new Vector<String>());
+			optionObjects.set(i, new Vector<Object>());
+			for(int j=0;j<formDescriptions.get(0).size();j++){
+				for(int k=0;k<formDescriptions.get(0).get(j).c.gridheight;k++){
+					Cell cell=sheet.getCell(descriptionColNum, k+formDescriptions.get(0).get(j).c.gridy);
+					OptionCheckBox button;
+					int top=(k==0?thickBorder:thinBorder);
+					int bottom=(k==formDescriptions.get(0).get(j).c.gridheight-1?thickBorder:thinBorder);
+					if(cell.getType()==CellType.BOOLEAN){
+						optionContents.get(i).add(cell.getContents());
+						optionDefaults.get(i).add(cell.getContents());
+						button=new OptionCheckBox(optionLabels[i], Boolean.valueOf(cell.getContents()), i+descriptionColNum, k+formDescriptions.get(0).get(j).c.gridy, 1, 1, BorderFactory.createMatteBorder(top, 1, bottom, 1, Color.GRAY));
+					}else{
+						optionContents.get(i).add(String.valueOf(false));
+						optionDefaults.get(i).add(String.valueOf(false));
+						button=new OptionCheckBox(optionLabels[i], false, i+descriptionColNum, k+formDescriptions.get(0).get(j).c.gridy, 1, 1, BorderFactory.createMatteBorder(top, 1, bottom, 1, Color.GRAY));
+					}
+					optionObjects.get(i).add(button);
+					final int colId=i;
+					final int rowId=k+formDescriptions.get(0).get(j).c.gridy-optionStartRow;
+					button.addChangeListener(new ChangeListener() {
+						@Override
+						public void stateChanged(ChangeEvent e) {
+							optionContents.get(colId).set(rowId, String.valueOf(((OptionCheckBox)e.getSource()).isSelected()));
+							((OptionCheckBox)e.getSource()).setBackground(((OptionCheckBox)e.getSource()).isSelected()?Color.GREEN:Color.YELLOW);
+						}
+					});	
+				}
+			}
+		}
+	}
+	
+	protected void setupOptionNumber(Sheet sheet){
+		optionContents.clear();
+		optionContents.setSize(optionColNum);
+		optionObjects.clear();
+		optionObjects.setSize(optionColNum);
+		optionDefaults.clear();
+		optionDefaults.setSize(optionColNum);
+		for(int i=0;i<optionColNum;i++){
+			optionContents.set(i, new Vector<String>());
+			optionDefaults.set(i, new Vector<String>());
+			optionObjects.set(i, new Vector<Object>());
+			for(int j=0;j<formDescriptions.get(0).size();j++){
+				for(int k=0;k<formDescriptions.get(0).get(j).c.gridheight;k++){
+					Cell cell=sheet.getCell(descriptionColNum, k+formDescriptions.get(0).get(j).c.gridy);
+					OptionTextField button;
+					if(cell.getType()==CellType.NUMBER){
+						optionContents.get(i).add(cell.getContents());
+						optionDefaults.get(i).add(cell.getContents());
+						button=new OptionTextField(cell.getContents(), i+descriptionColNum, k+formDescriptions.get(0).get(j).c.gridy, 1, 1);
+					}else{
+						optionContents.get(i).add("0");
+						optionDefaults.get(i).add("0");
+						button=new OptionTextField("0", i+descriptionColNum, k+formDescriptions.get(0).get(j).c.gridy, 1, 1);
+					}
+					optionObjects.get(i).add(button);
+				}
+			}
+		}
+	}
+		
+	protected void setupPanel(){
+		panel.removeAll();
+		for(int i=0;i<formDescriptions.size();i++){
+			for(int j=0;j<formDescriptions.get(i).size();j++){
+				panel.add(formDescriptions.get(i).get(j),formDescriptions.get(i).get(j).c);
+			}	
+		}
+		for(int i=0;i<optionObjects.size();i++){
+			for(int j=0;j<optionObjects.get(i).size();j++){
+				switch (optionType) {
+				case OptionRadio:{
+					OptionRadioButton button=(OptionRadioButton)optionObjects.get(i).get(j);
+					button.setSelected(Boolean.valueOf(optionContents.get(i).get(j)));
+					button.setBackground(Boolean.valueOf(optionContents.get(i).get(j))?Color.GREEN:Color.YELLOW);
+					panel.add(button,button.c);
+				}
+				break;
+				case OptionCheck:{
+					OptionCheckBox button=(OptionCheckBox)optionObjects.get(i).get(j);
+					button.setSelected(Boolean.valueOf(optionContents.get(i).get(j)));
+					button.setBackground(Boolean.valueOf(optionContents.get(i).get(j))?Color.GREEN:Color.YELLOW);
+					panel.add(button,button.c);
+				}
+				break;
+				case OptionNumber:{
+					OptionTextField button=(OptionTextField)optionObjects.get(i).get(j);
+					button.setText(optionContents.get(i).get(j));
+					panel.add(button,button.c);
+				}
+				break;
+				}
+			}
+		}
+		panel.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+	}
+	
+	protected void accumulateResult(FormTemplate form){
+		if(optionType!=OptionType.OptionNumber){
+			return;
+		}
+		if(optionContents.size()!=form.optionContents.size()){
+			return;
+		}
+		for(int i=0;i<optionContents.size();i++){
+			if(optionContents.get(i).size()!=form.optionContents.get(i).size()){
+				return;
+			}
+			for(int j=0;j<optionContents.get(i).size();j++){
+				int tmpResult=Integer.valueOf(optionContents.get(i).get(j));
+				if(form.optionType==OptionType.OptionNumber){
+					int tmpAdd=Integer.valueOf(form.optionContents.get(i).get(j));
+					tmpResult+=tmpAdd;
+				}else{
+					boolean tmpSelection=Boolean.valueOf(form.optionContents.get(i).get(j));
+					if(tmpSelection){
+						tmpResult++;
+					}
+				}
+				optionContents.get(i).set(j, String.valueOf(tmpResult));
+				((OptionTextField)(optionObjects.get(i).get(j))).setText(optionContents.get(i).get(j));
+			}
+		}
+		setupPanel();
+	}
+	
+	protected void resetResult(){
+		for(int i=0;i<optionContents.size();i++){
+			for(int j=0;j<optionContents.get(i).size();j++){
+				switch(optionType){
+				case OptionRadio:
+					optionContents.get(i).set(j, optionDefaults.get(i).get(j));
+					break;
+				case OptionCheck:
+					optionContents.get(i).set(j, optionDefaults.get(i).get(j));
+					break;
+				case OptionNumber:
+					optionContents.get(i).set(j, optionDefaults.get(i).get(j));
+					break;
+				}
+			}
+		}
+		setupPanel();
+	}
+	
+	public void saveForm(WritableSheet sheet) throws RowsExceededException, WriteException{
+		WritableFont dataFont = new WritableFont(WritableFont.createFont("����"), 12);
+		WritableCellFormat dataFormatInfo = new WritableCellFormat (dataFont);
+		dataFormatInfo.setBorder(Border.ALL, BorderLineStyle.THIN);
+		dataFormatInfo.setWrap(true);
+		dataFormatInfo.setAlignment(Alignment.CENTRE);
+		dataFormatInfo.setVerticalAlignment(VerticalAlignment.CENTRE);
+		
+		for(int i=0;i<formDescriptions.size();i++){
+			for(int j=0;j<formDescriptions.get(i).size();j++){
+				GridBagConstraints c=formDescriptions.get(i).get(j).c;
+				if(c.gridheight>1){
+					sheet.mergeCells(c.gridx, c.gridy, c.gridx+c.gridwidth-1, c.gridy+c.gridheight-1);
+				}
+				sheet.addCell(new Label(c.gridx,c.gridy,formDescriptions.get(i).get(j).getText(),dataFormatInfo));
+			}
+		}
+		
+		for(int i=0;i<optionColNum;i++){
+			sheet.addCell(new Label(descriptionColNum+i,0,optionLabels[i],dataFormatInfo));
+		}
+		
+		for(int i=0;i<optionContents.size();i++){
+			for(int j=0;j<optionContents.get(i).size();j++){
+				switch(optionType){
+				case OptionRadio:
+				case OptionCheck:
+					sheet.addCell(new jxl.write.Boolean(descriptionColNum+i,optionStartRow+j,Boolean.valueOf(optionContents.get(i).get(j)),dataFormatInfo));
+					break;
+				case OptionNumber:
+					sheet.addCell(new jxl.write.Number(descriptionColNum+i,optionStartRow+j,Integer.valueOf(optionContents.get(i).get(j)),dataFormatInfo));
+					break;
+				}
+			}			
+		}
+	}
+}

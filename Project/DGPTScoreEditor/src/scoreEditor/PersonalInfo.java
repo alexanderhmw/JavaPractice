@@ -37,33 +37,34 @@ public class PersonalInfo {
 		{
 			pTotal+=pScores[i]*scoreFactors[i];
 		}
+		int pTotalInt=(int)(pTotal+0.5);
 		if(pEvaluationFlag){
 			switch(evaType){
 			case GRADE5:
-				if(pTotal<=100&&pTotal>=95){
+				if(pTotalInt<=100&&pTotalInt>=95){
 					pEvaluation="A+";
-				}else if(pTotal<95&&pTotal>=90){
+				}else if(pTotalInt<95&&pTotalInt>=90){
 					pEvaluation="A";
-				}else if(pTotal<90&&pTotal>=85){
+				}else if(pTotalInt<90&&pTotalInt>=85){
 					pEvaluation="A-";
-				}else if(pTotal<85&&pTotal>=80){
+				}else if(pTotalInt<85&&pTotalInt>=80){
 					pEvaluation="B+";
-				}else if(pTotal<80&&pTotal>=75){
+				}else if(pTotalInt<80&&pTotalInt>=75){
 					pEvaluation="B";
-				}else if(pTotal<75&&pTotal>=70){
+				}else if(pTotalInt<75&&pTotalInt>=70){
 					pEvaluation="B-";
-				}else if(pTotal<70&&pTotal>=60){
+				}else if(pTotalInt<70&&pTotalInt>=60){
 					pEvaluation="C";
-				}else if(pTotal<60&&pTotal>=0){
+				}else if(pTotalInt<60&&pTotalInt>=0){
 					pEvaluation="D";
 				}else{
 					pEvaluation="Error";
 				}
 				break;
 			case GRADE2:
-				if(pTotal<=100&&pTotal>=60){
+				if(pTotalInt<=100&&pTotalInt>=60){
 					pEvaluation="P";
-				}else if(pTotal<60&&pTotal>=0){
+				}else if(pTotalInt<60&&pTotalInt>=0){
 					pEvaluation="F";
 				}else{
 					pEvaluation="Error";

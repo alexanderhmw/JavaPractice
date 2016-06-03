@@ -358,7 +358,7 @@ public class FormTemplate {
 			optionObjects.set(i, new Vector<Object>());
 			for(int j=0;j<formDescriptions.get(0).size();j++){
 				for(int k=0;k<formDescriptions.get(0).get(j).c.gridheight;k++){
-					Cell cell=sheet.getCell(descriptionColNum, k+formDescriptions.get(0).get(j).c.gridy);
+					Cell cell=sheet.getCell(i+descriptionColNum, k+formDescriptions.get(0).get(j).c.gridy);
 					OptionCheckBox button;
 					int top=(k==0?thickBorder:thinBorder);
 					int bottom=(k==formDescriptions.get(0).get(j).c.gridheight-1?thickBorder:thinBorder);
@@ -399,7 +399,7 @@ public class FormTemplate {
 			optionObjects.set(i, new Vector<Object>());
 			for(int j=0;j<formDescriptions.get(0).size();j++){
 				for(int k=0;k<formDescriptions.get(0).get(j).c.gridheight;k++){
-					Cell cell=sheet.getCell(descriptionColNum, k+formDescriptions.get(0).get(j).c.gridy);
+					Cell cell=sheet.getCell(i+descriptionColNum, k+formDescriptions.get(0).get(j).c.gridy);
 					OptionTextField button;
 					if(cell.getType()==CellType.NUMBER){
 						optionContents.get(i).add(cell.getContents());
@@ -527,10 +527,10 @@ public class FormTemplate {
 				switch(optionType){
 				case OptionRadio:
 				case OptionCheck:
-					sheet.addCell(new jxl.write.Boolean(descriptionColNum+i,optionStartRow+j,Boolean.valueOf(optionContents.get(i).get(j)),dataFormatInfo));
+					sheet.addCell(new jxl.write.Boolean(i+descriptionColNum,optionStartRow+j,Boolean.valueOf(optionContents.get(i).get(j)),dataFormatInfo));
 					break;
 				case OptionNumber:
-					sheet.addCell(new jxl.write.Number(descriptionColNum+i,optionStartRow+j,Integer.valueOf(optionContents.get(i).get(j)),dataFormatInfo));
+					sheet.addCell(new jxl.write.Number(i+descriptionColNum,optionStartRow+j,Integer.valueOf(optionContents.get(i).get(j)),dataFormatInfo));
 					break;
 				}
 			}			

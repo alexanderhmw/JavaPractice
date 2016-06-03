@@ -519,7 +519,7 @@ public class FormTemplate {
 		}
 		
 		for(int i=0;i<optionColNum;i++){
-			sheet.addCell(new Label(descriptionColNum+i,0,optionLabels[i],dataFormatInfo));
+			sheet.addCell(new Label(i+descriptionColNum,0,optionLabels[i],dataFormatInfo));
 		}
 		
 		for(int i=0;i<optionContents.size();i++){

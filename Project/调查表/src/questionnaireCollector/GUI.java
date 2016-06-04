@@ -1,35 +1,26 @@
 package questionnaireCollector;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.EventQueue;
-import java.awt.ScrollPane;
-import java.io.File;
+import java.awt.Font;
+import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.util.Arrays;
 
-import javax.swing.JFileChooser;
+import javax.swing.Box;
+import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.JSplitPane;
+import javax.swing.SwingConstants;
 
-import jxl.Cell;
-import jxl.Range;
-import jxl.Sheet;
-import jxl.Workbook;
 import jxl.read.biff.BiffException;
 import jxl.write.WriteException;
-
-import javax.swing.JButton;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
-import javax.swing.JSplitPane;
-import javax.swing.JPanel;
-import java.awt.Dimension;
-import javax.swing.Box;
-import java.awt.Component;
-import java.awt.Font;
-import javax.swing.JLabel;
-import javax.swing.SwingConstants;
 
 public class GUI {
 
@@ -192,6 +183,7 @@ public class GUI {
 		labelInput.setFont(new Font("微软雅黑", Font.BOLD, 20));
 		
 		JScrollPane scrollPaneInput=new JScrollPane(form.formInput.get(curSheet).panel);
+		scrollPaneInput.getViewport().setViewPosition(new Point(0,0));
 		panelInput.add(scrollPaneInput,BorderLayout.CENTER);
 		panelInput.add(labelInput, BorderLayout.NORTH);
 		panelInput.validate();

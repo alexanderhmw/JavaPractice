@@ -192,15 +192,20 @@ public class FormTemplate {
 	protected void setupOptionLabels(Sheet sheet){
 		optionLabels=new String[optionColNum];
 		for(int i=0;i<optionColNum;i++){
+			if(optionColNum>1&&optionStartRow>0){
+				optionLabels[i]=""+(i+1)+"-";
+			}else{
+				optionLabels[i]="";
+			}
 			if(optionStartRow>0){
 				Cell cell=sheet.getCell(i+descriptionColNum, 0);
 				if(cell.getType()==CellType.LABEL){
-					optionLabels[i]=cell.getContents();
+					optionLabels[i]+=cell.getContents();
 				}else{
-					optionLabels[i]="";
+					optionLabels[i]+="";
 				}
 			}else{
-				optionLabels[i]="";
+				optionLabels[i]+="";
 			}
 		}
 	}
@@ -323,11 +328,11 @@ public class FormTemplate {
 					if(cell.getType()==CellType.BOOLEAN){
 						optionContents.get(0).add(cell.getContents());
 						optionDefaults.get(0).add(cell.getContents());
-						button=new OptionRadioButton(optionLabels[0], Boolean.valueOf(cell.getContents()), descriptionColNum, j+formDescriptions.get(0).get(i).c.gridy, 1, 1, BorderFactory.createMatteBorder(top, 1, bottom, 1, Color.GRAY));
+						button=new OptionRadioButton(""+(j+1)+"-"+optionLabels[0], Boolean.valueOf(cell.getContents()), descriptionColNum, j+formDescriptions.get(0).get(i).c.gridy, 1, 1, BorderFactory.createMatteBorder(top, 1, bottom, 1, Color.GRAY));
 					}else{
 						optionContents.get(0).add(String.valueOf(j==0));
 						optionDefaults.get(0).add(String.valueOf(j==0));
-						button=new OptionRadioButton(optionLabels[0], j==0, descriptionColNum, j+formDescriptions.get(0).get(i).c.gridy, 1, 1, BorderFactory.createMatteBorder(top, 1, bottom, 1, Color.GRAY));
+						button=new OptionRadioButton(""+(j+1)+"-"+optionLabels[0], j==0, descriptionColNum, j+formDescriptions.get(0).get(i).c.gridy, 1, 1, BorderFactory.createMatteBorder(top, 1, bottom, 1, Color.GRAY));
 					}
 					optionObjects.get(0).add(button);
 					final int colId=0;
@@ -365,11 +370,11 @@ public class FormTemplate {
 					if(cell.getType()==CellType.BOOLEAN){
 						optionContents.get(i).add(cell.getContents());
 						optionDefaults.get(i).add(cell.getContents());
-						button=new OptionCheckBox(optionLabels[i], Boolean.valueOf(cell.getContents()), i+descriptionColNum, k+formDescriptions.get(0).get(j).c.gridy, 1, 1, BorderFactory.createMatteBorder(top, 1, bottom, 1, Color.GRAY));
+						button=new OptionCheckBox(""+(k+1)+"-"+optionLabels[i], Boolean.valueOf(cell.getContents()), i+descriptionColNum, k+formDescriptions.get(0).get(j).c.gridy, 1, 1, BorderFactory.createMatteBorder(top, 1, bottom, 1, Color.GRAY));
 					}else{
 						optionContents.get(i).add(String.valueOf(false));
 						optionDefaults.get(i).add(String.valueOf(false));
-						button=new OptionCheckBox(optionLabels[i], false, i+descriptionColNum, k+formDescriptions.get(0).get(j).c.gridy, 1, 1, BorderFactory.createMatteBorder(top, 1, bottom, 1, Color.GRAY));
+						button=new OptionCheckBox(""+(k+1)+"-"+optionLabels[i], false, i+descriptionColNum, k+formDescriptions.get(0).get(j).c.gridy, 1, 1, BorderFactory.createMatteBorder(top, 1, bottom, 1, Color.GRAY));
 					}
 					optionObjects.get(i).add(button);
 					final int colId=i;
